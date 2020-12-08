@@ -1318,7 +1318,10 @@ contains
     real, intent(inout):: pt(bd%isd:bd%ied,bd%jsd:bd%jed,npz) !< temp
     real, intent(inout):: ua(bd%isd:bd%ied,bd%jsd:bd%jed,npz) ! 
     real, intent(inout):: va(bd%isd:bd%ied,bd%jsd:bd%jed,npz) ! 
-    real, intent(inout):: delz(bd%isd:    ,bd%jsd:      ,1: ) !< delta-height (m); non-hydrostatic only
+    !real, intent(inout):: delz(bd%isd:    ,bd%jsd:      ,1: ) !< delta-height (m); non-hydrostatic only
+    !LJR MOD to fix index out of bounds bug that will be fixed later (See Issue #46)
+    real, intent(inout):: delz(bd%is:    ,bd%js:      ,1: ) !< delta-height (m); non-hydrostatic only
+    
     type(fv_grid_type), intent(IN) :: gridstruct
     type(domain2d), intent(INOUT) :: domain
 ! local:

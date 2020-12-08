@@ -6296,9 +6296,38 @@ end subroutine terminator_tracers
         f0(:,:) = f0_const
         fC(:,:) = f0_const
 
-        q = 0.
+        ! q = 0.  LJR: We don't want zero tracers
 
         select case (test_case)
+        !LJR We need a case here that just places the input data in to the correct arrays
+        case ( 999 )
+           print*, "NULL TEST CASE INITIALIZED"
+           phis(:,:) = 0.
+           !v(:,:,:) = 0.
+           !u(:,:,:) = 0.
+           !q(:,:,:,1) = 0.0
+           call prt_maxmin('u', u, is, ie, js, je, 0, npz, 1.   )
+           call prt_maxmin('v', v, is, ie, js, je, 0, npz, 1.   )
+           call prt_maxmin('q', v, is, ie, js, je, 0, npz, 1.   )
+           uc(isd:ied,:,:) = u(:,jsd:jed,:)
+           uc(ied+1,:,:) = u(ied,jsd:jed,:)
+           ua(:,:,:) = u(:,jsd:jed,:)
+
+           vc(:,jsd:jed,:) = v(isd:ied,:,:)
+           vc(:,jed+1,:) = v(isd:ied,jed,:)
+           va(:,:,:) = v(isd:ied,:,:)
+           call prt_maxmin('ua', ua, is, ie, js, je, 0, npz, 1.   )
+           call prt_maxmin('va', va, is, ie, js, je, 0, npz, 1.   )
+           call prt_maxmin('uc', uc, is, ie, js, je, 0, npz, 1.   )
+           call prt_maxmin('vc', vc, is, ie, js, je, 0, npz, 1.   )
+           call prt_maxmin('pt', pt, is, ie, js, je, 0, npz, 1.   )
+           call prt_maxmin('delp', delp, is, ie, js, je, 0, npz, 1.   )
+           do k = 1,npz
+             where(pt(:,:,k) > 350.0) pt(:,:,k) = minval(pt(:,:,k))
+             where(delp(:,:,k) > 10000.0) delp(:,:,k) = minval(delp(:,:,k))
+           end do
+           call prt_maxmin('pt', pt, is, ie, js, je, 0, npz, 1.   )
+           call prt_maxmin('delp', delp, is, ie, js, je, 0, npz, 1.   )
         case ( 1 )
 
            phis(:,:)=0.
