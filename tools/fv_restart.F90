@@ -434,6 +434,11 @@ contains
                         Atm(n)%ptop, Atm(n)%domain, Atm(n)%tile_of_mosaic, Atm(n)%bd)
                 endif
              elseif (grid_type == 4) then
+                if (Atm(n)%flagstruct%ideal_external_ic) then
+                    if( is_master() ) write(*,*) 'Calling get_external_ic'
+                    call get_external_ic(Atm(n), Atm(n)%domain, .not. do_read_restart,dt_atmos)
+                    if( is_master() ) write(*,*) 'IC generated from the specified external source'
+                endif
                 call init_double_periodic(Atm(n)%u,Atm(n)%v,Atm(n)%w,Atm(n)%pt, &
                      Atm(n)%delp,Atm(n)%q,Atm(n)%phis, Atm(n)%ps,Atm(n)%pe, &
                      Atm(n)%peln,Atm(n)%pk,Atm(n)%pkz, &

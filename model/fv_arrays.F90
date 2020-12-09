@@ -912,7 +912,7 @@ module fv_arrays_mod
    logical :: use_new_ncep = .false.  ! use the NCEP ICs created after 2014/10/22, if want to read CWAT
    logical :: use_ncep_phy = .false.  ! if .T., separate CWAT by weights of liq_wat and liq_ice in FV_IC
    logical :: fv_diag_ic = .false.    ! reconstruct IC from fv_diagnostics on lat-lon grid
-
+   logical :: ideal_external_ic = .false.  !LJR mod
    logical :: external_ic = .false.   !< Whether to initialize the models state using the data
                                       !< in an externally specified file, given in res_latlon_dynamics.
                                       !< By default this file is assumed to be a legacy lat-lon FV core restart file;
