@@ -26,6 +26,7 @@ SRCS_f90 =
 SRCS_F   =
 
 SRCS_F90 = \
+                   ./tools/module_diag_hailcast.F90 \
 		   ./model/a2b_edge.F90                           \
 		   ./model/multi_gases.F90                        \
 		   ./model/boundary.F90                           \
