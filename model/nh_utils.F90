@@ -1426,6 +1426,8 @@ CONTAINS
        enddo
     enddo
 
+# Set up tridiagonal coeffs for cubic spline interpolation
+
     do k=1,km-1
        do i=is, ie
           g_rat(i,k) = dm2(i,k)/dm2(i,k+1)
@@ -1442,6 +1444,8 @@ CONTAINS
        dd(i,km) = 3.*pe(i,km)
     enddo
 
+! Forward calculation of tri-diagonal system
+
     do k=2,km
       do i=is, ie
           gam(i,k) =  g_rat(i,k-1) / bet(i)
@@ -1450,32 +1454,36 @@ CONTAINS
       enddo
     enddo
 
+! Do the back substition, result is pp on zone edges.
+
     do k=km, 2, -1
        do i=is, ie
           pp(i,k) = pp(i,k) - gam(i,k)*pp(i,k+1)
        enddo
     enddo
 
-! Start the w-solver
+! Start the w-solver - aa is the 2*dt**2*gamma*p_full / dz
+
     do k=2, km
        do i=is, ie
+
 #ifdef MOIST_CAPPA
           aa(i,k) = t1g*0.5*(gm2(i,k-1)+gm2(i,k))/(dz2(i,k-1)+dz2(i,k)) * (pem(i,k)+pp(i,k))
 #else
-#ifdef MULTI_GASES
-          gamax = 1./(1.-kapad2(i,k))
-          t1gx = gamax * 2.*dt*dt
-          aa(i,k) = t1gx/(dz2(i,k-1)+dz2(i,k)) * (pem(i,k)+pp(i,k))
-#else
           aa(i,k) = t1g/(dz2(i,k-1)+dz2(i,k)) * (pem(i,k)+pp(i,k))
-#endif
 #endif
        enddo
     enddo
+
+! Boundary value calc for forward tri-diagonal solution
+
     do i=is, ie
        bet(i)  = dm2(i,1) - aa(i,2)
        w2(i,1) = (dm2(i,1)*w1(i,1) + dt*pp(i,2)) / bet(i)
     enddo
+
+! Forward tri-diagonal solution
+
     do k=2,km-1
        do i=is, ie
           gam(i,k) = aa(i,k) / bet(i)
@@ -1483,48 +1491,71 @@ CONTAINS
            w2(i,k) = (dm2(i,k)*w1(i,k)+dt*(pp(i,k+1)-pp(i,k))-aa(i,k)*w2(i,k-1)) / bet(i)
        enddo
     enddo
+
+! Boundary calc at bottom of grid for solution of w
+
     do i=is, ie
 #ifdef MOIST_CAPPA
-           p1(i) = t1g*gm2(i,km)/dz2(i,km)*(pem(i,km+1)+pp(i,km+1))
+       p1(i) = t1g*gm2(i,km)/dz2(i,km)*(pem(i,km+1)+pp(i,km+1))
 #else
-#ifdef MULTI_GASES
-           gamax = 1./(1.-kapad2(i,km))
-           t1gx = gamax * 2.*dt*dt
-           p1(i) = t1gx/dz2(i,km)*(pem(i,km+1)+pp(i,km+1))
-#else
-           p1(i) = t1g/dz2(i,km)*(pem(i,km+1)+pp(i,km+1))
-#endif
+       p1(i) = t1g/dz2(i,km)*(pem(i,km+1)+pp(i,km+1))
 #endif
        gam(i,km) = aa(i,km) / bet(i)
           bet(i) =  dm2(i,km) - (aa(i,km)+p1(i) + aa(i,km)*gam(i,km))
         w2(i,km) = (dm2(i,km)*w1(i,km)+dt*(pp(i,km+1)-pp(i,km))-p1(i)*ws(i)-aa(i,km)*w2(i,km-1))/bet(i)
     enddo
+
+! Do the back substition, result is newly updated w in center of zone
+
     do k=km-1, 1, -1
        do i=is, ie
           w2(i,k) = w2(i,k) - gam(i,k+1)*w2(i,k+1)
        enddo
     enddo
 
+! Next code is to vertically integrate p' starting from top bc (p' = 0) downward
+! using w-tendency.
+
+!   do i=is, ie
+!      pe(i,1) = 0.
+!   enddo
+!   do k=1,km
+!      do i=is, ie
+!         pe(i,k+1) = pe(i,k) + dm2(i,k)*(w2(i,k)-w1(i,k))*rdt
+!      enddo
+!   enddo
+
+! This code updates the p' using the vertical divergence centered on zone edge.
+
+! set top bc condition
+
     do i=is, ie
        pe(i,1) = 0.
     enddo
-    do k=1,km
+
+! Do column down to near the ground
+
+    do k=2,km
        do i=is, ie
-          pe(i,k+1) = pe(i,k) + dm2(i,k)*(w2(i,k)-w1(i,k))*rdt
+          aa(i,k) = dt*(gm2(i,k-1)+gm2(i,k))/(dz2(i,k-1)+dz2(i,k)) * (pem(i,k)+pp(i,k))
+          pe(i,k) = pe(i,k) - aa(i,k)*(w2(i,k-1)-w2(i,k))
        enddo
     enddo
+
+    do i=is, ie
+       aa(i,1) = dt*gm2(i,1)/dz2(i,1) * (pem(i,1)+pp(i,1))
+       pe(i,1) = pe(i,1) - aa(i,1)*(ws(i)-w2(i,1))
+    enddo
+! 
+
+! Recompute p' at center of the zones.
 
     do i=is, ie
            p1(i) = ( pe(i,km) + 2.*pe(i,km+1) )*r3
 #ifdef MOIST_CAPPA
        dz2(i,km) = -dm2(i,km)*rgas*pt2(i,km)*exp((cp2(i,km)-1.)*log(max(p_fac*pm2(i,km),p1(i)+pm2(i,km))))
 #else
-#ifdef MULTI_GASES
-       capa1x = kapad2(i,km)-1.
-       dz2(i,km) = -dm2(i,km)*rgas*pt2(i,km)*exp(capa1x*log(max(p_fac*pm2(i,km),p1(i)+pm2(i,km))))
-#else
        dz2(i,km) = -dm2(i,km)*rgas*pt2(i,km)*exp(capa1*log(max(p_fac*pm2(i,km),p1(i)+pm2(i,km))))
-#endif
 #endif
     enddo
 
