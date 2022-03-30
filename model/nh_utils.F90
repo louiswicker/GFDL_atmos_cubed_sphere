@@ -1381,8 +1381,8 @@ CONTAINS
                         kapad2, &
 #endif
                         pe, dm2,   &
-                        pm2, pem, w2, dz2, pt2, ws, p_fac)
-   integer, intent(in):: is, ie, km
+                        pm2, pem, w2, dz2, pt2, ws, p_fac, jslice)
+   integer, intent(in):: is, ie, km, jslice
    real,    intent(in):: dt, rgas, gama, kappa, p_fac
    real, intent(in), dimension(is:ie,km):: dm2, pt2, pm2, gm2, cp2
    real, intent(in )::  ws(is:ie)
@@ -1394,7 +1394,7 @@ CONTAINS
 #endif
 ! Local
    real, dimension(is:ie,km  ):: aa, bb, dd, w1, g_rat, gam
-   real, dimension(is:ie,km+1):: pp
+   real, dimension(is:ie,km+1):: pp, pptest
    real, dimension(is:ie):: p1, bet
    real t1g, rdt, capa1
 #ifdef MULTI_GASES
@@ -1516,36 +1516,45 @@ CONTAINS
 ! Next code is to vertically integrate p' starting from top bc (p' = 0) downward
 ! using w-tendency.
 
-!   do i=is, ie
-!      pe(i,1) = 0.
-!   enddo
-!   do k=1,km
-!      do i=is, ie
-!         pe(i,k+1) = pe(i,k) + dm2(i,k)*(w2(i,k)-w1(i,k))*rdt
-!      enddo
-!   enddo
+    do i=is, ie
+       pe(i,1) = 0.
+    enddo
+    do k=1,km
+       do i=is, ie
+          pe(i,k+1) = pe(i,k) + dm2(i,k)*(w2(i,k)-w1(i,k))*rdt
+       enddo
+    enddo
 
 ! This code updates the p' using the vertical divergence centered on zone edge.
 
 ! set top bc condition
 
     do i=is, ie
-       pe(i,1) = 0.
+       pptest(i,1) = 0.
     enddo
 
 ! Do column down to near the ground
 
     do k=2,km
        do i=is, ie
-          aa(i,k) = dt*(gm2(i,k-1)+gm2(i,k))/(dz2(i,k-1)+dz2(i,k)) * (pem(i,k)+pp(i,k))
-          pe(i,k) = pp(i,k) - aa(i,k)*(w2(i,k-1)-w2(i,k))
+          aa(i,k)     = dt*(gm2(i,k-1)+gm2(i,k))/(dz2(i,k-1)+dz2(i,k)) * (pem(i,k)+pp(i,k))
+          pptest(i,k) = pp(i,k) - aa(i,k)*(w2(i,k-1)-w2(i,k))
        enddo
     enddo
 
     do i=is, ie
-       aa(i,km)   = dt*gm2(i,km)/dz2(i,km) * (pem(i,km+1)+pp(i,km+1))
-       pe(i,km+1) = pp(i,km+1) - aa(i,km)*(ws(i)-w2(i,km))
+       aa(i,km)       = dt*gm2(i,km)/dz2(i,km) * (pem(i,km+1)+pp(i,km+1))
+       pptest(i,km+1) = pp(i,km+1) - aa(i,km)*(ws(i)-w2(i,km))
     enddo
+
+    IF( (is .lt. 128) .and. (ie .gt. 128) .and. (jslice .eq. 128)) then
+
+       do k = km+1, 1, -1
+          write(55,*), k, pe(128,k), pptest(128,k)
+       enddo
+
+    ENDIF
+
 ! 
 
 ! Recompute p' at center of the zones.
