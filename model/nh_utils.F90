@@ -1543,8 +1543,8 @@ CONTAINS
     enddo
 
     do i=is, ie
-       aa(i,1) = dt*gm2(i,1)/dz2(i,1) * (pem(i,1)+pp(i,1))
-       pe(i,1) = pp(i,1) - aa(i,1)*(ws(i)-w2(i,1))
+       aa(i,km) = dt*gm2(i,km)/dz2(i,km) * (pem(i,km)+pp(i,km))
+       pe(i,km+1) = pp(i,km) - aa(i,km)*(ws(i)-w2(i,km))
     enddo
 ! 
 
