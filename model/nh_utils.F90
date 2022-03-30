@@ -1544,7 +1544,7 @@ CONTAINS
 
     do i=is, ie
        aa(i,km) = dt*gm2(i,km)/dz2(i,km) * (pem(i,km)+pp(i,km))
-       pe(i,km+1) = pp(i,km) - aa(i,km)*(ws(i)-w2(i,km))
+       pe(i,km+1) = pp(i,km+1) - aa(i,km)*(ws(i)-w2(i,km))
     enddo
 ! 
 
