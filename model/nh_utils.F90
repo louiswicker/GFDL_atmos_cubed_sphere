@@ -1426,7 +1426,7 @@ CONTAINS
        enddo
     enddo
 
-# Set up tridiagonal coeffs for cubic spline interpolation
+! Set up tridiagonal coeffs for cubic spline interpolation
 
     do k=1,km-1
        do i=is, ie
@@ -1538,13 +1538,13 @@ CONTAINS
     do k=2,km
        do i=is, ie
           aa(i,k) = dt*(gm2(i,k-1)+gm2(i,k))/(dz2(i,k-1)+dz2(i,k)) * (pem(i,k)+pp(i,k))
-          pe(i,k) = pe(i,k) + aa(i,k)*(w2(i,k-1)-w2(i,k))
+          pe(i,k) = pp(i,k) - aa(i,k)*(w2(i,k-1)-w2(i,k))
        enddo
     enddo
 
     do i=is, ie
        aa(i,1) = dt*gm2(i,1)/dz2(i,1) * (pem(i,1)+pp(i,1))
-       pe(i,1) = pe(i,1) + aa(i,1)*(ws(i)-w2(i,1))
+       pe(i,1) = pp(i,1) - aa(i,1)*(ws(i)-w2(i,1))
     enddo
 ! 
 
