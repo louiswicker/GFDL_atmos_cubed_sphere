@@ -105,6 +105,15 @@ CONTAINS
   real gama, rgrav, ptk, peln1
   integer i, j, k
 
+!
+!
+!
+    write(55,*) is, ie
+    write(55,*) js, je
+!
+!
+!
+
     gama = 1./(1.-akap)
    rgrav = 1./grav
    peln1 = log(ptop)
@@ -203,7 +212,7 @@ CONTAINS
                             kapad2,  &
 #endif
                             pe2, dm,   &
-                            pm2, pem, w2, dz2, pt(is:ie,j,1:km), ws(is,j), p_fac)
+                            pm2, pem, w2, dz2, pt(is:ie,j,1:km), ws(is,j), p_fac, j)
       else
            call SIM_solver(dt, is, ie, km, rdgas, gama, gm2, cp2, akap, &
 #ifdef MULTI_GASES
