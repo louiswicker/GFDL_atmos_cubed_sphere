@@ -1555,11 +1555,11 @@ CONTAINS
           hdh = dmup / dmdn
           hmh = dmup * dmdn
 
-          dwup = (w2(i,k-1)-w1(i,k-1))
-          dwcn = (w2(i,k  )-w1(i,k  ))
-          dwdn = (w2(i,k+1)-w1(i,k+1))
+          dwup = dm2(i,k-1)*(w2(i,k-1)-w1(i,k-1))
+          dwcn = dm2(i,k  )*(w2(i,k  )-w1(i,k  ))
+          dwdn = dm2(i,k+1)*(w2(i,k+1)-w1(i,k+1))
 
-          pe(i,k+1) = pe(i,k) + rdt*dm2(i,k)*(hph/12.0)*((2.0-hdh)*dwup + (hph**2/hmh)*dwcn + (2.0-1.0/hdh)*dwdn)
+          pe(i,k+1) = pe(i,k) + rdt*(hph/12.0)*((2.0-hdh)*dwup + (hph**2/hmh)*dwcn + (2.0-1.0/hdh)*dwdn)
 
         enddo
       enddo
@@ -1602,9 +1602,7 @@ CONTAINS
 
     ENDIF
 
-! 
-
-! Recompute p' at center of the zones.
+! Recompute p' at center of the zones - go from the bottom up to use the lower BC for pe(km+1) (p'(gnd))
 
     do i=is, ie
            p1(i) = ( pe(i,km) + 2.*pe(i,km+1) )*r3
@@ -1622,12 +1620,7 @@ CONTAINS
           dz2(i,k) = -dm2(i,k)*rgas*pt2(i,k)*exp((cp2(i,k)-1.)*log(max(p_fac*pm2(i,k),p1(i)+pm2(i,k))))
 
 #else
-#ifdef MULTI_GASES
-          capa1x = kapad2(i,k)-1.
-          dz2(i,k) = -dm2(i,k)*rgas*pt2(i,k)*exp(capa1x*log(max(p_fac*pm2(i,k),p1(i)+pm2(i,k))))
-#else
           dz2(i,k) = -dm2(i,k)*rgas*pt2(i,k)*exp(capa1*log(max(p_fac*pm2(i,k),p1(i)+pm2(i,k))))
-#endif
 #endif
        enddo
     enddo
