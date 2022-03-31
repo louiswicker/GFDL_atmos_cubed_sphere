@@ -1548,8 +1548,8 @@ CONTAINS
       do k=2,km-1
         do i=is, ie
 
-          dmup = 0.5*(dm(i,k-1)+dm(i,k))
-          dmdn = 0.5*(dm(i,k+1)+dm(i,k))
+          dmup = -0.5*(dz2(i,k-1)+dz2(i,k))
+          dmdn = -0.5*(dz2(i,k+1)+dz2(i,k))
 
           hph = dmup + dmdn
           hdh = dmup / dmdn
@@ -1559,7 +1559,7 @@ CONTAINS
           dwcn = (w2(i,k  )-w1(i,k  ))
           dwdn = (w2(i,k+1)-w1(i,k+1))
 
-          pe(i,k+1) = pe(i,k) + rdt*(hph/6.0)*((2.0-hdh)*dwup + (hph**2/hmh)*dwcn + (2.0-1.0/hdh)*dwdn)
+          pe(i,k+1) = pe(i,k) + rdt*dm2(i,k)*(hph/12.0)*((2.0-hdh)*dwup + (hph**2/hmh)*dwcn + (2.0-1.0/hdh)*dwdn)
 
         enddo
       enddo
