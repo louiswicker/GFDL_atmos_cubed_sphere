@@ -1397,6 +1397,13 @@ CONTAINS
    real, dimension(is:ie,km+1):: pp, pptest
    real, dimension(is:ie):: p1, bet
    real t1g, rdt, capa1
+
+!
+   real hph, hdh, hmh
+!
+
+   logical :: simpson = .true.
+
 #ifdef MULTI_GASES
    real  gamax, capa1x, t1gx
 #endif
@@ -1519,11 +1526,51 @@ CONTAINS
     do i=is, ie
        pe(i,1) = 0.
     enddo
-    do k=1,km
-       do i=is, ie
+
+    IF( .not. simpson ) THEN
+
+      do k=1,km
+        do i=is, ie
           pe(i,k+1) = pe(i,k) + dm2(i,k)*(w2(i,k)-w1(i,k))*rdt
-       enddo
-    enddo
+        enddo
+      enddo
+
+    ELSE   ! use simpsons rule to integrate downward
+
+    ! First, approximate the km edge with midpoint rule (what is normally used)
+
+      do i=is, ie
+        pe(i,2) = pe(i,1) + dm2(i,1)*(w2(i,1)-w1(i,1))*rdt
+      enddo
+
+    ! Next, do the interior of the grid to km - 1 using simpson's rule
+
+      do k=2,km-1
+        do i=is, ie
+
+          dmup = 0.5*(dm(i,k-1)+dm(i,k))
+          dmdn = 0.5*(dm(i,k+1)+dm(i,k))
+
+          hph = dmup + dmdn
+          hdh = dmup / dmdn
+          hmh = dmup * dmdn
+
+          dwup = (w2(i,k-1)-w1(i,k-1))
+          dwcn = (w2(i,k  )-w1(i,k  ))
+          dwdn = (w2(i,k+1)-w1(i,k+1))
+
+          pe(i,k+1) = pe(i,k) + rdt*(hph/6.0)*((2.0-hdh)*dwup + (hph**2/hmh)*dwcn + (2.0-1.0/hdh)*dwdn)
+
+        enddo
+      enddo
+
+    ! Finally, do the bottom pressure using midpoint rule
+
+      do i=is, ie
+        pe(i,km+1) = pe(i,km) + dm2(i,km)*(w2(i,km)-w1(i,km))*rdt
+      enddo
+
+    ENDIF
 
 ! This code updates the p' using the vertical divergence centered on zone edge.
 
